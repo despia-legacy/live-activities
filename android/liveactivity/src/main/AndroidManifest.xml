@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Live Updates: a normal (install-time) permission, no prompt. Android 16 promotes an ongoing
+         notification to a Live Update only when the app declares it. -->
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
+    <!-- Already in the base app; declared here so the module states what it needs. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application>
+        <!-- OneSignal calls this class for every push it receives, also while the app is closed
+             (OneSignal, "Android Live Updates"). The name is fixed by OneSignal; one app has one. -->
+        <meta-data
+            android:name="com.onesignal.NotificationServiceExtension"
+            android:value="despia.ext.liveactivity.OneSignalLiveUpdates" />
+
+        <!-- Swipe-away and the "Remove" action of a Live Update. Not exported: only this app's own
+             PendingIntents reach it. -->
+        <receiver
+            android:name="despia.ext.liveactivity.DismissReceiver"
+            android:exported="false" />
+    </application>
+</manifest>

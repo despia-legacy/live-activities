@@ -1,0 +1,33 @@
+// The extension module's build. Despia compiles it with the app; it downloads nothing at run time.
+//
+// OneSignal is compileOnly, with the Despia app's own coordinate, range and excludes
+// (the app's build.gradle, "withPushImplementation('com.onesignal:OneSignal:[5.0.0, 5.1.99]')"):
+// the Despia app owns and ships the SDK, so this module never adds a second copy or another version.
+// Only OneSignalLiveUpdates.java names a OneSignal type, and OneSignal alone loads that class (from
+// the manifest meta-data), so a build without OneSignal never touches it.
+apply plugin: 'com.android.library'
+
+android {
+    namespace 'despia.ext.liveactivity'
+    // Notification.ProgressStyle and setShortCriticalText are API 36.
+    compileSdk 36
+    defaultConfig {
+        minSdk 24
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation project(':nativeext-api')
+    // The Despia app's own versions (the app's build.gradle): the notification permission request
+    // (ActivityResultRegistry) and @Keep on the class OneSignal loads by name.
+    implementation 'androidx.activity:activity:1.13.0'
+    implementation 'androidx.annotation:annotation:1.9.1'
+    compileOnly('com.onesignal:OneSignal:[5.0.0, 5.1.99]') {
+        exclude group: 'com.onesignal', module: 'location'
+        exclude group: 'com.google.android.gms', module: 'play-services-ads-identifier'
+    }
+}

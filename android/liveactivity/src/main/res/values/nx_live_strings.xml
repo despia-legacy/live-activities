@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nx_live_channel_name">Live updates</string>
+    <string name="nx_live_channel_description">Ongoing deliveries, scores and timers</string>
+    <string name="nx_live_remove">Remove</string>
+</resources>

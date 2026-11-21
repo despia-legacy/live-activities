@@ -1,0 +1,217 @@
+{
+  "version": "1.0.0",
+  "bridge": {
+    "routes": [
+      {
+        "name": "start",
+        "params": {
+          "template": {
+            "type": "string",
+            "max": 32,
+            "required": true
+          },
+          "activity_id": {
+            "type": "string",
+            "max": 64
+          },
+          "attributes": {
+            "type": "string",
+            "max": 4096,
+            "required": true
+          },
+          "state": {
+            "type": "string",
+            "max": 4096,
+            "required": true
+          },
+          "stale_minutes": {
+            "type": "int",
+            "min": 0,
+            "max": 720
+          },
+          "relevance": {
+            "type": "int",
+            "min": 0,
+            "max": 100
+          }
+        },
+        "output": {
+          "variable": "liveActivityStart",
+          "callback": "onLiveActivityStart"
+        }
+      },
+      {
+        "name": "update",
+        "params": {
+          "activity_id": {
+            "type": "string",
+            "max": 64,
+            "required": true
+          },
+          "state": {
+            "type": "string",
+            "max": 4096,
+            "required": true
+          },
+          "stale_minutes": {
+            "type": "int",
+            "min": 0,
+            "max": 720
+          },
+          "relevance": {
+            "type": "int",
+            "min": 0,
+            "max": 100
+          },
+          "alert_title": {
+            "type": "string",
+            "max": 120
+          },
+          "alert_body": {
+            "type": "string",
+            "max": 240
+          }
+        },
+        "output": {
+          "variable": "liveActivityUpdate",
+          "callback": "onLiveActivityUpdate"
+        }
+      },
+      {
+        "name": "end",
+        "params": {
+          "activity_id": {
+            "type": "string",
+            "max": 64,
+            "required": true
+          },
+          "state": {
+            "type": "string",
+            "max": 4096
+          },
+          "dismiss": {
+            "type": "enum",
+            "values": [
+              "default",
+              "immediate",
+              "after"
+            ]
+          },
+          "dismiss_minutes": {
+            "type": "int",
+            "min": 0,
+            "max": 240
+          }
+        },
+        "output": {
+          "variable": "liveActivityEnd",
+          "callback": "onLiveActivityEnd"
+        }
+      },
+      {
+        "name": "list",
+        "params": {},
+        "output": {
+          "variable": "liveActivityList",
+          "callback": "onLiveActivityList"
+        }
+      },
+      {
+        "name": "permission",
+        "params": {},
+        "output": {
+          "variable": "liveActivityPermission",
+          "callback": "onLiveActivityPermission"
+        }
+      },
+      {
+        "name": "settings",
+        "params": {},
+        "output": {
+          "variable": "liveActivitySettings",
+          "callback": "onLiveActivitySettings"
+        }
+      }
+    ],
+    "events": [
+      {
+        "name": "token",
+        "callback": "onLiveActivityToken",
+        "scope": "app"
+      },
+      {
+        "name": "state",
+        "callback": "onLiveActivityState",
+        "scope": "app"
+      },
+      {
+        "name": "dismissed",
+        "callback": "onLiveActivityDismissed",
+        "scope": "app"
+      }
+    ]
+  },
+  "ios": {
+    "app": {
+      "entry_type": "LiveActivityExtension",
+      "sources": [
+        "ios/app/LiveActivityExtension.swift",
+        "ios/app/LiveActivityCore.swift",
+        "ios/app/LiveTemplateRegistry.swift",
+        "ios/app/OneSignalLiveLink.swift",
+        "ios/shared/LiveTemplate.swift",
+        "ios/shared/templates/DeliveryActivity.swift",
+        "ios/shared/templates/ScoreActivity.swift",
+        "ios/shared/templates/TimerActivity.swift"
+      ],
+      "frameworks": [
+        "ActivityKit",
+        "SwiftUI",
+        "WidgetKit"
+      ],
+      "info_plist": {
+        "NSSupportsLiveActivities": true,
+        "NSSupportsLiveActivitiesFrequentUpdates": true
+      },
+      "custom_keys": true,
+      "lifecycle": [
+        "launch"
+      ]
+    },
+    "targets": [
+      {
+        "kind": "widgetkit",
+        "name": "NXLiveActivity",
+        "sources": [
+          "ios/targets/NXLiveActivity/NXLiveActivityBundle.swift"
+        ],
+        "shared_sources": [
+          "ios/shared/LiveTemplate.swift",
+          "ios/shared/templates/DeliveryActivity.swift",
+          "ios/shared/templates/ScoreActivity.swift",
+          "ios/shared/templates/TimerActivity.swift"
+        ],
+        "info_plist": {
+          "NSWidgetDescription": "Live Activities",
+          "NSSupportsLiveActivities": true
+        },
+        "deployment_target": "16.6"
+      }
+    ]
+  },
+  "android": {
+    "entry_class": "despia.ext.liveactivity.LiveActivityExtension",
+    "lifecycle": [
+      "application_create",
+      "activity_lifecycle"
+    ],
+    "modules": [
+      {
+        "kind": "custom",
+        "name": "liveactivity",
+        "dir": "android/liveactivity",
+        "link": "implementation"
+      }
+    ]
+  }
+}
