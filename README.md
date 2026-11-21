@@ -116,7 +116,22 @@ const ended = endedReply.liveActivityEnd;
 if (ended === undefined) throw new Error('No native reply within 30 seconds');
 if (!ended.ok) throw new Error(ended.code + ': ' + ended.error);
 
-globalThis.onLiveActivityState = event => console.log(event.activityId, event.state, event.origin);
+const previousLiveActivityState = globalThis.onLiveActivityState;
+const handleLiveActivityState = event => {
+  try {
+    if (typeof previousLiveActivityState === 'function') previousLiveActivityState(event);
+  } finally {
+    console.log(event.activityId, event.state, event.origin)
+  }
+};
+globalThis.onLiveActivityState = handleLiveActivityState;
+const cleanupLiveActivityState = () => {
+  if (globalThis.onLiveActivityState !== handleLiveActivityState) return;
+  if (previousLiveActivityState === undefined) delete globalThis.onLiveActivityState;
+  else globalThis.onLiveActivityState = previousLiveActivityState;
+};
+// Call cleanupLiveActivityState() when this component unmounts.
+
 // Remove or restore your event callback on unmount.
 ```
 
