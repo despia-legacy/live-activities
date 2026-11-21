@@ -41,19 +41,23 @@ Install the SDK in your web app:
 npm install despia-native
 ```
 
-Copy `example/src/lib/despia-extension.js` to your app's `src/lib/` and adjust the import path if needed. It imports `despia` from `despia-native`, calls the SDK and returns the native answer's `data`. It checks native error envelopes and throws an error with their `code`. The SDK itself resolves native `ok: false` envelopes; it does not reject them. A single watched value becomes `undefined` after 30 seconds, which this helper reports as `sdk_timeout`.
+Call the published SDK directly and watch the exact answer variable declared in `manifest.json`. The SDK resolves to an object keyed by that variable; the native envelope is inside it. Check both a missing reply and `ok: false` before using `data`. Native errors resolve through the SDK; they do not reject its promise. A single watched variable becomes `undefined` after 30 seconds without a reply.
 
-Each helper call forwards a unique native callback into a separate watched value, so overlapping calls do not share response globals. `onExtensionEvent` registers the declared native event callbacks and returns a cleanup function. Events are callbacks, not values you can poll from the SDK proxy.
+Await calls that use the same answer variable sequentially. The SDK's command queue does not correlate concurrent responses. Encode every query value with `encodeURIComponent`, including JSON text. Spaces become `%20`; a literal plus becomes `%2B`. Do not use unmodified `URLSearchParams` form encoding, which uses plus for spaces.
 
-Importing the SDK is safe during server rendering. Run calls and event subscriptions only from browser click handlers or mounted client hooks. React and Vue can use the browser APIs used by this helper; in Next.js and other server-rendered apps, keep these calls in client code. The extension must be included in the installed Despia V3 app; a browser preview has no native extension features.
+Importing the SDK is safe during server rendering. Run native calls only in browser click handlers or mounted client hooks, including client components in Next.js. The extension must be included in the installed Despia V3 app; a browser preview has no native extension features. Optional event handlers use the declared callback on `globalThis`, not an SDK subscription API. Save and restore any callback your app already owns when a component mounts and unmounts.
 
 ## Calling it
 
 ```javascript
-import { extensionCall } from './lib/despia-extension.js';
+import despia from 'despia-native';
 
-const answer = await extensionCall('liveactivity', 'list');
-console.log(answer);
+const answerReply = await despia('extension://liveactivity/list', ['liveActivityList']);
+const answer = answerReply.liveActivityList;
+if (answer === undefined) throw new Error('No native reply within 30 seconds');
+if (!answer.ok) throw new Error(answer.code + ': ' + answer.error);
+
+console.log(answer.data);
 ```
 
 Calls use `extension://liveactivity/<route>?<params>`. Each route answers once, in the page that made the call: the runtime sets the route's answer variable in the page, then calls the route's callback. Only declared parameters are accepted. Keep large data on the native side and pass identifiers through the bridge. A call URL is at most 8192 characters.
@@ -92,28 +96,28 @@ Every file must be named in the manifest: each Swift file by its path, and the A
 ## Using it from your web app
 
 ```javascript
-import { extensionCall, onExtensionEvent } from './lib/despia-extension.js';
-const activity = (route, params) => extensionCall('liveactivity', route, params);
+import despia from 'despia-native';
 
-export async function startDelivery(orderId) {
-  return activity('start', {
-    template: 'delivery', activity_id: 'order-' + orderId,
-    attributes: { orderNumber: orderId, merchant: 'Corner Bakery' },
-    state: { status: 'Preparing', step: 1, stepCount: 4, etaEpoch: Date.now() / 1000 + 1800 },
-    stale_minutes: 60
-  });
-}
-export const updateDelivery = (orderId, state) => activity('update', { activity_id: 'order-' + orderId, state });
-export const endDelivery = orderId => activity('end', {
-  activity_id: 'order-' + orderId, state: { status: 'Delivered', step: 4, stepCount: 4 },
-  dismiss: 'after', dismiss_minutes: 30
-});
-const stopState = onExtensionEvent('onLiveActivityState', event => console.log(event.activityId, event.state, event.origin));
-const stopDismissed = onExtensionEvent('onLiveActivityDismissed', event => console.log(event.activityId, event.by));
-const stopTokens = onExtensionEvent('onLiveActivityToken', event => console.log(event.kind, event.activityId || event.template));
-const running = await activity('list');
-console.log(running.activities);
-// On unmount: stopState(); stopDismissed(); stopTokens();
+const attributes = { orderNumber: '1042', merchant: 'Corner Bakery' };
+const state = { status: 'Preparing', step: 1, stepCount: 4, etaEpoch: Date.now() / 1000 + 1800 };
+
+const startedReply = await despia(`extension://liveactivity/start?template=${encodeURIComponent('delivery')}&activity_id=${encodeURIComponent('order-1042')}&attributes=${encodeURIComponent(JSON.stringify(attributes))}&state=${encodeURIComponent(JSON.stringify(state))}&stale_minutes=${encodeURIComponent(60)}`, ['liveActivityStart']);
+const started = startedReply.liveActivityStart;
+if (started === undefined) throw new Error('No native reply within 30 seconds');
+if (!started.ok) throw new Error(started.code + ': ' + started.error);
+
+const updatedReply = await despia(`extension://liveactivity/update?activity_id=${encodeURIComponent('order-1042')}&state=${encodeURIComponent(JSON.stringify({ status: 'Out for delivery', step: 3, stepCount: 4, etaEpoch: state.etaEpoch }))}`, ['liveActivityUpdate']);
+const updated = updatedReply.liveActivityUpdate;
+if (updated === undefined) throw new Error('No native reply within 30 seconds');
+if (!updated.ok) throw new Error(updated.code + ': ' + updated.error);
+
+const endedReply = await despia(`extension://liveactivity/end?activity_id=${encodeURIComponent('order-1042')}&state=${encodeURIComponent(JSON.stringify({ status: 'Delivered', step: 4, stepCount: 4 }))}&dismiss=${encodeURIComponent('after')}&dismiss_minutes=${encodeURIComponent(30)}`, ['liveActivityEnd']);
+const ended = endedReply.liveActivityEnd;
+if (ended === undefined) throw new Error('No native reply within 30 seconds');
+if (!ended.ok) throw new Error(ended.code + ': ' + ended.error);
+
+globalThis.onLiveActivityState = event => console.log(event.activityId, event.state, event.origin);
+// Remove or restore your event callback on unmount.
 ```
 
 Times are Unix seconds (`Date.now() / 1000`), never date strings. Attributes and state together must stay under 4 KB.
