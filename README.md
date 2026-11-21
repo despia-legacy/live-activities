@@ -1,6 +1,6 @@
 # Live Activities
 
-Source preview for Despia V3. This snapshot requires the runtime update currently awaiting release and an approved extension-enabled native build. Uploading these files does not change an installed app.
+Source preview for Despia V3. The runtime update and automatic discovery rollout are awaiting release. Rebuild and install the native app to include these files; uploading them does not change an installed app.
 
 Live Activities on iOS and Live Updates on Android, from your page or OneSignal.
 
@@ -17,11 +17,11 @@ Use the Despia SDK with React, Vue, Svelte, Next.js, TanStack or HTML5. Projects
 - `manifest.json`: the extension's routes, parameters, events and native files.
 - `ios/` and `android/`: the Swift and Kotlin or Java sources and resources the manifest names.
 - `extensions.example.json`: the entry for `public/despia/extensions.json`.
-- `liveactivity.policy.json`: an empty policy example. No additional approval fields are needed by this fixture. A policy example is not an approval.
+- `liveactivity.policy.json`: an empty build-policy example. Keep it outside the hosted extension folder.
 
 ## Requirements
 
-- A Despia V3 app with V3 Extensions enabled, and a web app that serves static files from its own HTTPS origin.
+- A Despia V3 app and a web app that serves static files from its own HTTPS origin.
 - The `despia-native` JavaScript SDK (`npm install despia-native`).
 - iOS 16.2 or later for Live Activities.
 - A OneSignal account if you update activities from your server.
@@ -31,7 +31,9 @@ Use the Despia SDK with React, Vue, Svelte, Next.js, TanStack or HTML5. Projects
 1. Copy `manifest.json`, `ios/` and `android/` into `public/despia/liveactivity/` in your web app. The folder name is the extension id, so pages call `extension://liveactivity/<route>`. Keep every path inside the folder unchanged, because the manifest names them. (`public/` is the folder your site serves from its root; in SvelteKit, use `static/`.)
 2. Add `"liveactivity"` to the `extensions` list in `public/despia/extensions.json`. `extensions.example.json` shows the entry. Despia takes app identity from the build configuration.
 3. Set the values listed under "Values to set before you build". Vendor keys and hosts in this repository are placeholders only. Never put a server secret in the manifest or anywhere in your web app.
-4. Request approval and a new native build in Despia. Despia reviews and approves these exact files before a build includes them, and any change to the manifest or to a native file needs a new approval and a new native build. It cannot be applied over the air.
+4. Rebuild and install the native app with these extension files. Any change to the manifest or native source requires another native build. It cannot be applied over the air.
+
+Signed build verification binds source hashes, dependency pins, app identity and final artifacts. It is separate from human code review and does not require a per-app enrollment switch.
 
 ## JavaScript SDK
 
@@ -89,7 +91,7 @@ What to edit:
 - **Add one line per template you add:** `LiveTemplateRegistry.swift`, `NXLiveActivityBundle.swift` and `LiveTemplates.java`.
 - **Leave alone:** every other file.
 
-Every file must be named in the manifest: each Swift file by its path, and the Android files by their module folder (`android/liveactivity`). The manifest may not name a file that is missing. When you add or rename a Swift file, change the manifest too. Every change needs a new approval from Despia.
+Every file must be named in the manifest: each Swift file by its path, and the Android files by their module folder (`android/liveactivity`). The manifest may not name a file that is missing. When you add or rename a Swift file, change the manifest too. Every native source or manifest change needs a new native build and updated signed verification.
 
 ---
 
