@@ -216,7 +216,7 @@ The activity id, the template's attribute keys and its state keys are the same o
 - **Notifications.** `POST_NOTIFICATIONS` on Android 13 and later, asked by `permission`.
 - **Live Updates.** On Android 16 each activity is one ongoing notification, and the system promotes it to a Live Update when it is eligible.
 - **OneSignal.** `OneSignalLiveUpdates.java` is OneSignal's notification service extension, declared once by the module manifest. It uses the OneSignal SDK your app already has.
-- **Libraries.** `androidx.activity:activity:1.13.0` and `androidx.annotation:annotation:1.9.1`, the versions your app's base build already resolves.
+- **Libraries.** `androidx.activity:activity:1.13.0` and `androidx.annotation:annotation:1.11.0`, the latest stable releases on Google Maven (read 24 November 2026).
 
 ---
 
